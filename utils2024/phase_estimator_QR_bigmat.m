@@ -1,5 +1,5 @@
-function [grad_z,grad_x,k,sws_matrix] = phase_estimator_bigMatrix(u, w_kernel,f_v,dinf,og_size,constant,pars)
-% function [grad_z,grad_x,k,sws_matrix] = phase_estimator_TotalVariationPDO(u, w_kernel,f_v,dinf,og_size,constant,pars)
+function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_v,dinf,og_size,constant, stride)
+% function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_v,dinf,og_size,constant)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function that yields the shear wave speed of a region with the 
 % phase gradient method with QR solver MATLAB first version. 
@@ -19,14 +19,8 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_bigMatrix(u, w_kernel,f_
 %          sws_matrix   : Shear wave speed matrix 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     
-    lambda = pars.lambda;
-    tau = pars.tau;
-    maxIter = pars.maxIter;
-    tol = pars.tol;
-    numberEstimators = 1;
-    stableIter = pars.stableIter;
 
-
+    st = stride;
     res_z = dinf.dz; % Axial resolution
     res_x = dinf.dx; % Lateral resolution
     
@@ -50,8 +44,15 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_bigMatrix(u, w_kernel,f_
 
     % Better pre-allocation v2.0
 %    501−15+1 = 487.^2, if not mirror padding is applieds
-    st = 1;
-    numSubMatrices = ceil(M/st)*ceil(N/st); 
+    %% HELP FOR DIMENSIONS %% % THEORY
+    size_mirror = size(u); % ogsize + w_kernel - 1; %  = size (u)
+    numkernels = floor( (size_mirror - w_kernel)./st + 1 ); % numKernels
+    overlap_ax1 = 1 - st/w_kernel(1);
+    overlap_la1 = 1 - st/w_kernel(2);
+    size_out = floor( (og_size - 1)./st + 1 );
+
+    numSubMatrices = prod(numkernels);
+%     numSubMatrices = ceil(M/st)*ceil(N/st);  % old v1.0
 %     Az_large = sparse(numSubMatrices*numRows, numSubMatrices*numCols);
 
     Az_large = kron(speye(numSubMatrices), A_small);
@@ -77,11 +78,17 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_bigMatrix(u, w_kernel,f_
 
             %%%%%%%%%%%% BETTER EFFICIENCY v2.0 %%%%%%%%%%%%
             rowStart = (cont_kernel-1)*numRows + 1; % size ww
+            rowEnd = rowStart + numRows - 1;
 %             colStart = (cont_kernel-1)*numCols + 1; % size 3
 
+%             fprintf('Index iteration %d, [a b] = [%d %d]\n', cont_kernel, rowStart, rowEnd);
+
+            bz_large(rowStart:rowEnd) = bz_small;
+            bx_large(rowStart:rowEnd) = bx_small;
+
 %             Az_large(rowStart:rowStart+numRows-1, colStart:colStart+numCols-1) = A_small;
-            bz_large(rowStart:rowStart+numRows-1) = bz_small;
-            bx_large(rowStart:rowStart+numRows-1) = bx_small;
+%             bz_large(rowStart:rowStart+numRows-1) = bz_small;
+%             bx_large(rowStart:rowStart+numRows-1) = bx_small;
             
             %%%%%%%%%%%% BETTER EFFICIENT v2.0 %%%%%%%%%%%%
 
@@ -101,22 +108,25 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_bigMatrix(u, w_kernel,f_
         end
     end
 
-    disp(cont_kernel);
+%     disp(cont_kernel);
     %%%%% FOR x %%%%%
     results_x = Ax_large\bx_large;  
-    res3D_x = reshape(results_x, [M, N, 3]); clear results_x
+%     res3D_x = reshape(results_x, [M, N, 3]); clear results_x
+    res3D_x = reshape(results_x, [size_out(1), size_out(2), 3]);
 %     kx_x = res3D_x(:,:,1); kz_x = res3D_x(:,:,2); 
     %%%%% FOR z %%%%%
     results_z = Az_large\bz_large;  
-    res3D_z = reshape(results_z, [M, N, 3]); clear results_z
+%     res3D_z = reshape(results_z, [M, N, 3]); clear results_z
+    res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
 %     kx_z = res3D_z(:,:,1); kz_z = res3D_z(:,:,2); 
     
     grad_x = res3D_x(:,:,1); grad_z = res3D_z(:,:,2);
-    phase_grad_2 = grad_x.^2 + grad_z.^2;
+    phase_grad_2 = (grad_x.^2 + grad_z.^2)/constant;
     
     % ----- MedFilt  ----
     med_wind = floor (2.5/f_v/dinf.dx)*2+1; %the median window contains at least a wavelenght
-    k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric')/constant;
+%     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric')/constant;
+    k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric');
     k = sqrt(k2_med);
     % --------------------
     sws_matrix = (2*pi*f_v)./k;   

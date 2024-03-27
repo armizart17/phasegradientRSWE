@@ -63,10 +63,11 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QRVersion(u, w_kernel,f_
         end
     end
     
-    phase_grad_2 = grad_x.^2 + grad_z.^2;
+    phase_grad_2 = (grad_x.^2 + grad_z.^2)/constant;
 
     med_wind = floor (2.5/f_v/dinf.dx)*2+1; %the median window contains at least a wavelenght
-    k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric')/constant;
+%     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric')/constant;
+    k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric');
     k = sqrt(k2_med);
 
     sws_matrix = (2*pi*f_v)./k;

@@ -1,5 +1,5 @@
-function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_v,dinf,og_size,constant, stride)
-% function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_v,dinf,og_size,constant)
+function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmatAxLat(u, w_kernel,f_v,dinf,og_size,constant, stride)
+% function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmatAxLat(u, w_kernel,f_v,dinf,og_size,constant)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function that yields the shear wave speed of a region with the 
 % phase gradient method to Apply TOTAL VARIATION in AXIAL & LATERAL directions

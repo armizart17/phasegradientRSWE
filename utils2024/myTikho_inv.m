@@ -1,5 +1,5 @@
-function u = myTikho_inv (A, b, lambda, option, pars)
-% function u = myTikhonov (A, b, lambda)
+function u = myTikho_inv (A, b, pars)
+% function u = myTikho_inv (A, b, pars)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Tikhonov regularization to minimize:
 % arg min(u) = ||Au-b||_2^2 +  ||u||_2^2
@@ -10,42 +10,56 @@ function u = myTikho_inv (A, b, lambda, option, pars)
 % INPUTS:
 %       - A     : Linear System Matrix A
 %       - b     : Observed data vector b
-%       - lambda: Regularization pararameter
-%       - option: (1)cgs, (2)inv, (3)QR solver
+%       - pars  :
+%           - pars.lambda: Regularization pararameter
+%           - pars.version: (1)cgs, (2)inv, (3)QR solver, (6) personalized
+%                           (11) chat GPT
+%           For pars.version=6
+%             pars.k = 1;
+%             pars.beta = 1/100000; 
+%             pars.tolerance = 1e-3;
+%             pars.operator = 'G';
+%             pars.alpha = 2;
+%           
 % OUTPUS:
 %       - u     : u solved by Tikhonov
 % Developed by: Edmundo Arom Miranda, based on R-WAVE code
-% Version 1
+% Version 1.0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     
-    At = A';
-    AtA = At*A;
-    [m, n] = size(AtA);
-    switch option
-        case 1 % option 1          
-            u = cgs(AtA + lambda*speye(m,n), At*b);
-        case 2 % option 2 
-            u = inv(AtA + lambda*speye(m,n))*At*b;
-        case 3 % option 3 
-            u = (AtA + lambda*speye(m,n))\(At*b);
 
-        case 6 % option Generalized
+    switch pars.version
+        case 1 % version 1  
+            At = A';
+            AtA = At*A;
+            [m, n] = size(AtA);
+            u = cgs(AtA + pars.lambda*speye(m,n), At*b);
+%             u = cgs(AtA + pars.lambda*speye(m,n), At*b, pars.tol);
+
+        case 2 % version 2 
+            At = A';
+            AtA = At*A;
+            [m, n] = size(AtA);
+            u = inv(AtA + pars.lambda*speye(m,n))*At*b;
+
+        case 3 % version 3
+            At = A';
+            AtA = At*A;
+            [m, n] = size(AtA);
+            u = (AtA + pars.lambda*speye(m,n))\(At*b);
+
+        case 6 % version personalized
             u = tikho_personalized(A, b, pars);
-        case 11 % new CGPT
+
+        case 11 % version GPT
             u = tikho_gpt (A, b, pars);
 
     end
     
 end
-function x = tikho_personalized (A, b, Param)
 
-    Param.k = 1;
-    Param.beta = 1/100000; % 1e5;
-    Param.beta = 1; % 1e5;
-    Param.tolerance = 1e-5;
-    Param.operator = 'G';
-    Param.alpha = 2;
+function x = tikho_personalized (A, b, Param)
     
     switch (Param.operator)
         case 'I'
@@ -73,11 +87,11 @@ function x = tikho_personalized (A, b, Param)
         W = spdiags(W_diagonal, 0, size(A,2), size(A,2));
     
         x = (AtA+Param.alpha^2*L'*W*L)\(At*b); %del Paper A Regularized Inverse Approach to Ultrasonic
-        %Pulse-Echo Imaging página 3
+        % Pulse-Echo Imaging página 3
         err = norm(x-x0)^2 / norm(x)^2; % relative error 
         x0 = x;
     end
-    disp(x)
+
 end
 
 function x_reg = tikho_gpt(A, b, pars)
@@ -89,7 +103,6 @@ function x_reg = tikho_gpt(A, b, pars)
     % Construct the Tikhonov regularization matrix (L)
     % For simplicity, using identity matrix as L, assuming a zero-order Tikhonov regularization
     lambda = pars.lambda;
-    lambda = 0.11;
     L = speye(size(A,2)); 
     
     % Solve the regularized linear system

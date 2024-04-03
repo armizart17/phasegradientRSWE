@@ -32,9 +32,6 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_TK_bigmat(u, w_kernel,f_
     grad_x = grad_z; % matrixes containing the estimated wavenumber along each direction
     
     angle_u = angle(u);
-    [M, N] = size(angle_u);
-    %angle_u_unwrp = unwrap(angle_u, [], direction);
-    %angle_u_unwrp = unwrap(angle_u, [], 2);   
     
     [X, Z] = meshgrid(x_axis,z_axis);
     A_small = [X(:) Z(:) ones(length(x_axis)*length(z_axis),1)]; 
@@ -51,8 +48,7 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_TK_bigmat(u, w_kernel,f_
     size_out = floor( (og_size - 1)./st + 1 );
 
     numSubMatrices = prod(numkernels);
-%     numSubMatrices = ceil(M/st)*ceil(N/st);  % old v1.0
-%     Az_large = sparse(numSubMatrices*numRows, numSubMatrices*numCols);
+
 
     Az_large = kron(speye(numSubMatrices), A_small);
     bz_large = zeros(numSubMatrices*numRows, 1); 
@@ -107,25 +103,31 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_TK_bigmat(u, w_kernel,f_
         end
     end
 
-    disp(cont_kernel);
+%     disp(cont_kernel);
+
     %%%%% FOR x %%%%%
-%     results_x = Ax_large\bx_large;  
-    results_x = myTikho_inv (Ax_large, bx_large, pars.lambda, pars.version, pars);
-%     res3D_x = reshape(results_x, [M, N, 3]); clear results_x
-    res3D_x = reshape(results_x, [size_out(1), size_out(2), 3]);
+  
+    results_x = myTikho_inv (Ax_large, bx_large, pars);
+    res3D_x  = reshape(results_x, [3, size_out(2), size_out(1)]); 
+    res3D_x = permute(res3D_x, [3 2 1]); 
+
+%     res3D_x = reshape(results_x, [size_out(1), size_out(2), 3]);
 %     kx_x = res3D_x(:,:,1); kz_x = res3D_x(:,:,2); 
+
     %%%%% FOR z %%%%%
-%     results_z = Az_large\bz_large;  
-    results_z = myTikho_inv (Az_large, bz_large, pars.lambda, pars.version, pars);
-%     res3D_z = reshape(results_z, [M, N, 3]); clear results_z
-    res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
+
+    results_z = myTikho_inv (Az_large, bz_large, pars);
+    res3D_z  = reshape(results_z, [3, size_out(2), size_out(1)]); 
+    res3D_z = permute(res3D_z, [3 2 1]);
+
+%     res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
 %     kx_z = res3D_z(:,:,1); kz_z = res3D_z(:,:,2); 
     
     grad_x = res3D_x(:,:,1); grad_z = res3D_z(:,:,2);
     phase_grad_2 = (grad_x.^2 + grad_z.^2)/constant;
     
     % ----- MedFilt  ----
-    med_wind = floor (2.5/f_v/dinf.dx)*2+1; %the median window contains at least a wavelenght
+    med_wind = floor (2.5/f_v/dinf.dx)*2+1; % the median window contains at least a wavelenght
     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric');
     k = sqrt(k2_med);
     % --------------------

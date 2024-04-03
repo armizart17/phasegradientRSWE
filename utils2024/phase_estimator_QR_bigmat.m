@@ -42,23 +42,29 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_
     [numRows, numCols] = size(A_small); % [ww, 3]
 %     b_small = zeros( size(w_kernel(1), w_kernel(2)) );
 
+%     numCondA_small = cond(A_small);
+%     fprintf('cond(A_small) = %f\n', numCondA_small);
+
     % Better pre-allocation v2.0
 %    501−15+1 = 487.^2, if not mirror padding is applieds
     %% HELP FOR DIMENSIONS %% % THEORY
     size_mirror = size(u); % ogsize + w_kernel - 1; %  = size (u)
     numkernels = floor( (size_mirror - w_kernel)./st + 1 ); % numKernels
-    overlap_ax1 = 1 - st/w_kernel(1);
+    overlap_ax1 = 1 - st/w_kernel(1); 
     overlap_la1 = 1 - st/w_kernel(2);
     size_out = floor( (og_size - 1)./st + 1 );
 
     numSubMatrices = prod(numkernels);
-%     numSubMatrices = ceil(M/st)*ceil(N/st);  % old v1.0
-%     Az_large = sparse(numSubMatrices*numRows, numSubMatrices*numCols);
 
     Az_large = kron(speye(numSubMatrices), A_small);
     bz_large = zeros(numSubMatrices*numRows, 1); 
     Ax_large = Az_large;
     bx_large = bz_large;
+    
+%     sigma_max = svds(Az_large, 1, 'largest');
+%     sigma_min = svds(Az_large, 1, 'smallest');
+%     numCondA_large = sigma_max / sigma_min;
+%     fprintf('cond(A_large) = %f\n', numCondA_large);
 
     % For concatenation v1.0
 %     A_large = [];
@@ -81,7 +87,7 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_
             rowEnd = rowStart + numRows - 1;
 %             colStart = (cont_kernel-1)*numCols + 1; % size 3
 
-%             fprintf('Index iteration %d, [a b] = [%d %d]\n', cont_kernel, rowStart, rowEnd);
+%             fprintf('Index iter # %d idx [%d %d]\n', cont_kernel, rowStart, rowEnd);
 
             bz_large(rowStart:rowEnd) = bz_small;
             bx_large(rowStart:rowEnd) = bx_small;
@@ -107,17 +113,28 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_
             cont_kernel = cont_kernel + 1;
         end
     end
+    
+
 
 %     disp(cont_kernel);
     %%%%% FOR x %%%%%
     results_x = Ax_large\bx_large;  
+    
+    res3D_x  = reshape(results_x, [3, size_out(2), size_out(1)]); 
+    res3D_x = permute(res3D_x, [3 2 1]); 
+    
 %     res3D_x = reshape(results_x, [M, N, 3]); clear results_x
-    res3D_x = reshape(results_x, [size_out(1), size_out(2), 3]);
+%     res3D_x = reshape(results_x, [size_out(1), size_out(2), 3]);
 %     kx_x = res3D_x(:,:,1); kz_x = res3D_x(:,:,2); 
     %%%%% FOR z %%%%%
     results_z = Az_large\bz_large;  
+    
+    res3D_z  = reshape(results_z, [3, size_out(2), size_out(1)]); 
+    res3D_z = permute(res3D_z, [3 2 1]);
+    
+
 %     res3D_z = reshape(results_z, [M, N, 3]); clear results_z
-    res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
+%     res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
 %     kx_z = res3D_z(:,:,1); kz_z = res3D_z(:,:,2); 
     
     grad_x = res3D_x(:,:,1); grad_z = res3D_z(:,:,2);

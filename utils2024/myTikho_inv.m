@@ -27,15 +27,13 @@ function u = myTikho_inv (A, b, pars)
 % Version 1.0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    
-
     switch pars.version
         case 1 % version 1  
             At = A';
             AtA = At*A;
             [m, n] = size(AtA);
-            u = cgs(AtA + pars.lambda*speye(m,n), At*b);
-%             u = cgs(AtA + pars.lambda*speye(m,n), At*b, pars.tol);
+%             u = cgs(AtA + pars.lambda*speye(m,n), At*b);
+            u = cgs(AtA + pars.lambda*speye(m,n), At*b, pars.tolerance);
 
         case 2 % version 2 
             At = A';
@@ -73,7 +71,9 @@ function x = tikho_personalized (A, b, Param)
     B = b';
     x0 = zeros(size(A,2),1);
     err = 1;
-    while err > Param.tolerance
+%     while err > Param.tolerance 
+    iterCount = 0; % Initialize iteration counter
+    while err > Param.tolerance && iterCount < Param.maxIter 
     
         Lx = L*x0; 
         
@@ -90,8 +90,11 @@ function x = tikho_personalized (A, b, Param)
         % Pulse-Echo Imaging página 3
         err = norm(x-x0)^2 / norm(x)^2; % relative error 
         x0 = x;
-    end
 
+        iterCount = iterCount + 1;
+        fprintf('Iter Nº %d, err = %f\n', iterCount, err );
+    end
+    
 end
 
 function x_reg = tikho_gpt(A, b, pars)

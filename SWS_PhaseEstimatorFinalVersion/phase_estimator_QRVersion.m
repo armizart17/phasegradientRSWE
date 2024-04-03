@@ -1,7 +1,8 @@
-function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QRVersion(u, w_kernel,f_v,dinf,og_size,constant)
+function [grad_z,grad_x,k,sws_map] = phase_estimator_QRVersion(u, w_kernel,f_v,dinf,og_size,constant)
+% function [grad_z,grad_x,k,sws_map] = phase_estimator_QRVersion(u, w_kernel,f_v,dinf,og_size,constant)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function that yields the shear wave speed of a region with the 
-% phase gradient method with QR solver MATLAB first version. 
+% phase gradient method with QR solver MATLAB optimized version doing by kernel. 
 % 
 % Inputs:  
 %          u           : 2D region of interest to evaluate (previously mirror padding)
@@ -10,12 +11,13 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QRVersion(u, w_kernel,f_
 %          dinf        : structure that contains the spatial resolutions
 %          og_size     : vector containing the original size of the data
 %          constant    : constant from equations (0.33 gives good results)
-
+%                           (kx + kz)/constant
 % Outputs: 
 %          grad_z       : Gradient matrix for the axial direction
 %          grad_x       : Gradient matrix for the lateral direction
 %          k            : Total Wavenumber matrix 
-%          sws_matrix   : Shear wave speed matrix 
+%          sws_map      : Shear wave speed map 
+% Author: EMZ optimized
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
 
     res_z = dinf.dz; % Axial resolution
@@ -36,30 +38,30 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QRVersion(u, w_kernel,f_
 
     [X,Z] = meshgrid(x_axis,z_axis);
     A = [X(:) Z(:) ones(length(x_axis)*length(z_axis),1)];
-    At = A'; 
-    AtA = A'*A;
+%     At = A'; 
+%     AtA = A'*A;
+%     numCond = cond(A);
+
+%     fprintf('cond(A) = %f\n', numCond);
 
     angle_z = unwrap(angle_u,[],1);
-    for ii = 1:og_size(1)
-        for jj=1:og_size(2) %% for faster computing pararell toolbox
-            area = angle_z(ii: ii+w_kernel(1)-1,jj:jj+w_kernel(2)-1); % Window kernel
-            %% QR solver
-            b = area(:);
-            results = A\b;
-%             results = AtA\At*b; % same effect
-            grad_z(ii,jj) = results(2);
-        end
-    end
-    % SEPARATED 4 NOW; later fix in one single loop for efficiency
     angle_x = unwrap(angle_u,[],2);
-    for ii = 1:og_size(1)
-        for jj=1:og_size(2) %% for faster computing pararell toolbox
-            area = angle_x(ii: ii+w_kernel(1)-1,jj:jj+w_kernel(2)-1); % Window kernel
-            %% QR solver
-            b = area(:);
-            results = A\b;
-%             results = AtA\At*b; % same effect
-            grad_x(ii,jj) = results(1);
+    for ii = 1 : og_size(1)
+        for jj = 1 : og_size(2) %% for faster computing pararell toolbox
+            area_z = angle_z(ii: ii+w_kernel(1)-1,jj:jj+w_kernel(2)-1); % Window kernel
+            area_x = angle_x(ii: ii+w_kernel(1)-1,jj:jj+w_kernel(2)-1); % Window kernel
+        
+            %% QR solver z
+            b_z = area_z(:);
+            results_z = A\b_z;
+%             results_z = AtA\At*b_z; % same effect
+            grad_z(ii,jj) = results_z(2);
+            %% QR solver x
+            b_x = area_x(:);
+            results_x = A\b_x;
+%             results = AtA\At*b_x; % same effect
+            grad_x(ii,jj) = results_x(1);
+
         end
     end
     
@@ -70,5 +72,5 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QRVersion(u, w_kernel,f_
     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric');
     k = sqrt(k2_med);
 
-    sws_matrix = (2*pi*f_v)./k;
+    sws_map = (2*pi*f_v)./k;
 end

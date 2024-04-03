@@ -54,6 +54,7 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_TK_bigmat(u, w_kernel,f_
     bz_large = zeros(numSubMatrices*numRows, 1); 
     Ax_large = Az_large;
     bx_large = bz_large;
+    AA_large = kron(speye(2*numSubMatrices), A_small);
 
     % For concatenation v1.0
 %     A_large = [];
@@ -119,11 +120,26 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_TK_bigmat(u, w_kernel,f_
     results_z = myTikho_inv (Az_large, bz_large, pars);
     res3D_z  = reshape(results_z, [3, size_out(2), size_out(1)]); 
     res3D_z = permute(res3D_z, [3 2 1]);
+    
+    grad_x = res3D_x(:,:,1); grad_z = res3D_z(:,:,2);
+
+    %%%% BIG REGU NOT YET
+%     bb_large = [bx_large; bz_large];
+%     results = myTikho_inv (AA_large, bb_large, pars);
+%     results_x = results(1:end/2);
+%     results_z = results(end/2 +1: end);
+% 
+%     res3D_x  = reshape(results_x, [3, size_out(2), size_out(1)]); 
+%     res3D_x = permute(res3D_x, [3 2 1]);     
+% 
+%     res3D_z  = reshape(results_z, [3, size_out(2), size_out(1)]); 
+%     res3D_z = permute(res3D_z, [3 2 1]);
+    %%%% BIG REGU NOT YET
 
 %     res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
 %     kx_z = res3D_z(:,:,1); kz_z = res3D_z(:,:,2); 
     
-    grad_x = res3D_x(:,:,1); grad_z = res3D_z(:,:,2);
+
     phase_grad_2 = (grad_x.^2 + grad_z.^2)/constant;
     
     % ----- MedFilt  ----

@@ -12,6 +12,7 @@ function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,d
 %          og_size     : vector containing the original size of the data
 %          constant    : constant from equations (0.33 gives good results)
 %                           (kx + kz)/constant
+%          stride      : stride for window movement
 % Outputs: 
 %          grad_z       : Gradient matrix for the axial direction
 %          grad_x       : Gradient matrix for the lateral direction

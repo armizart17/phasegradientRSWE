@@ -117,32 +117,26 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_
 
 
 %     disp(cont_kernel);
+
     %%%%% FOR x %%%%%
     results_x = Ax_large\bx_large;  
     
     res3D_x  = reshape(results_x, [3, size_out(2), size_out(1)]); 
     res3D_x = permute(res3D_x, [3 2 1]); 
     
-%     res3D_x = reshape(results_x, [M, N, 3]); clear results_x
-%     res3D_x = reshape(results_x, [size_out(1), size_out(2), 3]);
-%     kx_x = res3D_x(:,:,1); kz_x = res3D_x(:,:,2); 
     %%%%% FOR z %%%%%
     results_z = Az_large\bz_large;  
     
     res3D_z  = reshape(results_z, [3, size_out(2), size_out(1)]); 
     res3D_z = permute(res3D_z, [3 2 1]);
-    
 
-%     res3D_z = reshape(results_z, [M, N, 3]); clear results_z
-%     res3D_z = reshape(results_z, [size_out(1), size_out(2), 3]);
-%     kx_z = res3D_z(:,:,1); kz_z = res3D_z(:,:,2); 
     
     grad_x = res3D_x(:,:,1); grad_z = res3D_z(:,:,2);
     phase_grad_2 = (grad_x.^2 + grad_z.^2)/constant;
     
     % ----- MedFilt  ----
     med_wind = floor (2.5/f_v/dinf.dx)*2+1; %the median window contains at least a wavelenght
-%     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric')/constant;
+%     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric')/constant; % better constant apply before
     k2_med = medfilt2(phase_grad_2,[med_wind med_wind],'symmetric');
     k = sqrt(k2_med);
     % --------------------

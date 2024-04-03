@@ -2,7 +2,7 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_
 % function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_v,dinf,og_size,constant)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function that yields the shear wave speed of a region with the 
-% phase gradient method with QR solver MATLAB first version. 
+% phase gradient method to Apply TOTAL VARIATION in AXIAL & LATERAL directions
 % 
 % Inputs:  
 %          u           : 2D region of interest to evaluate (previously mirror padding)
@@ -17,6 +17,7 @@ function [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(u, w_kernel,f_
 %          grad_x       : Gradient matrix for the lateral direction
 %          k            : Total Wavenumber matrix 
 %          sws_matrix   : Shear wave speed matrix 
+% AUTHOR: EAMZ 4 SM
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     
 

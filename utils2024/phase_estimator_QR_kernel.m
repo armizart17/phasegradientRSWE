@@ -2,7 +2,7 @@ function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,d
 % function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,dinf,og_size,constant)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function that yields the shear wave speed of a region with the 
-% phase gradient method with QR solver MATLAB optimized version doing by kernel. 
+% phase gradient method with QR solver MATLAB optimized version doing by KERNEL. 
 % 
 % Inputs:  
 %          u           : 2D region of interest to evaluate (previously mirror padding)

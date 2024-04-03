@@ -1,5 +1,5 @@
-function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,dinf,og_size,constant)
-% function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,dinf,og_size,constant)
+function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,dinf,og_size,constant,stride)
+% function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,dinf,og_size,constant,stride)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function that yields the shear wave speed of a region with the 
 % phase gradient method with QR solver MATLAB optimized version doing by KERNEL. 
@@ -19,7 +19,7 @@ function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,d
 %          sws_map      : Shear wave speed map 
 % Author: EMZ optimized
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-
+    st = stride;
     res_z = dinf.dz; % Axial resolution
     res_x = dinf.dx; % Lateral resolution
     
@@ -44,10 +44,17 @@ function [grad_z,grad_x,k,sws_map] = phase_estimator_QR_kernel(u, w_kernel,f_v,d
 
 %     fprintf('cond(A) = %f\n', numCond);
 
+    %% HELP FOR DIMENSIONS %% % THEORY
+    size_mirror = size(u); % ogsize + w_kernel - 1; %  = size (u)
+    numkernels = floor( (size_mirror - w_kernel)./st + 1 ); % numKernels
+    overlap_ax1 = 1 - st/w_kernel(1);
+    overlap_la1 = 1 - st/w_kernel(2);
+    size_out = floor( (og_size - 1)./st + 1 );
+
     angle_z = unwrap(angle_u,[],1);
     angle_x = unwrap(angle_u,[],2);
-    for ii = 1 : og_size(1)
-        for jj = 1 : og_size(2) %% for faster computing pararell toolbox
+    for ii = 1:st:og_size(1)
+        for jj = 1:st:og_size(2) %% for faster computing pararell toolbox
             area_z = angle_z(ii: ii+w_kernel(1)-1,jj:jj+w_kernel(2)-1); % Window kernel
             area_x = angle_x(ii: ii+w_kernel(1)-1,jj:jj+w_kernel(2)-1); % Window kernel
         

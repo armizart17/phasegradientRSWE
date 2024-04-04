@@ -106,8 +106,8 @@ for freq = v_freq
     if ~exist(pathfreq_out,"dir"); mkdir(pathfreq_out); end
 
     for field = 1:nFields
-        name = ['R-FIELD_homo_',num2str(field),'.mat'];% homo mantain
-%         name = ['R-FIELD_incup_',num2str(field),'.mat']; % inc up test fast
+%         name = ['R-FIELD_homo_',num2str(field),'.mat'];% homo mantain
+        name = ['R-FIELD_incup_',num2str(field),'.mat']; % inc up test fast
 
         R_Field = load([pathfreq_in, name]);
         dinf.dx = min(diff(R_Field.x));
@@ -182,8 +182,8 @@ for freq = v_freq
     if ~exist(pathfreq_out,"dir"); mkdir(pathfreq_out); end
 
     for field = 1:nFields
-                name = ['R-FIELD_homo_',num2str(field),'.mat'];% homo mantain
-%         name = ['R-FIELD_incup_',num2str(field),'.mat']; % inc up test fast
+%         name = ['R-FIELD_homo_',num2str(field),'.mat'];% homo mantain
+        name = ['R-FIELD_incup_',num2str(field),'.mat']; % inc up test fast
 
         R_Field = load([pathfreq_in, name]);
         dinf.dx = min(diff(R_Field.x));
@@ -253,6 +253,7 @@ parsTK.beta = 1/(parsTK.lambda + eps); % 1e5;
 parsTK.tolerance = 1e-3;
 parsTK.operator = 'G';
 parsTK.alpha = 2;
+parsTK.maxIter = 100;
 
 % parsTK.version = 11;
 % parsTK.lambda = 1/1e8;
@@ -276,8 +277,8 @@ for freq = v_freq
     if ~exist(pathfreq_out,"dir"); mkdir(pathfreq_out); end
 
     for field = 1:nFields
-        name = ['R-FIELD_homo_',num2str(field),'.mat'];% homo mantain
-%         name = ['R-FIELD_incup_',num2str(field),'.mat']; % inc up test fast
+%         name = ['R-FIELD_homo_',num2str(field),'.mat'];% homo mantain
+        name = ['R-FIELD_incup_',num2str(field),'.mat']; % inc up test fast
 
         R_Field = load([pathfreq_in, name]);
         dinf.dx = min(diff(R_Field.x));

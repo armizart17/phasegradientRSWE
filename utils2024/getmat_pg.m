@@ -31,7 +31,7 @@ function [Ax_large, Az_large, bx_large, bz_large, size_out] = getmat_pg(u, w_ker
 %     results_vect = A\b;  % could be results_x = my_TV(A, b)
 %     
 %     results_3D  = reshape(results_vect, [3, size_out(2), size_out(1)]); 
-%     results_3D = permute(res3D_x, [3 2 1]); 
+%     results_3D = permute(results_3D, [3 2 1]); 
 %     kx_plane = results_3D(:,:,1), kz_plane = results_3D(:,:,2), cte_plane = results_3D(:,:,3),
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
     

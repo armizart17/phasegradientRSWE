@@ -213,6 +213,89 @@ toc
 fprintf('---------------------------\n')
 
 %%
+
+
+
+
+%%
+tol = 1e-3;
+mask = ones(M*N,1);
+isotropic = true;
+colMajor = false;
+
+
+%% GENERATE DATA SWS INCLUSION ONE FRAME WITH PHASE ESTIMATOR WITH TNV (multi frequency)
+
+addpath(genpath(pwd));
+
+fprintf('-------QR solver 2.0-------\n')
+
+% 500Hz 2.5m/s 1l = 5mm = 51pix 4.5m/s 1l = 9mm = 91pix
+% 600Hz 2.5m/s 1l = 4.17mm = 41pix 4.5m/s 1l = 7.5mm = 75pix
+% 700Hz 2.5m/s 1l = 3.57mm = 35pix 4.5m/s 1l = 6.42mm = 65pix
+
+% 800Hz 2.5m/s 1l = 3.125mm = 33pix 4.5m/s 1l = 5.625mm = 57pix
+% 900Hz 2.5m/s 1l = 2.77mm = 29pix 4.5m/s 1l = 5mm = 51pix
+% 1000Hz 2.5m/s 1l = 2.5mmm = 27pix 4.5m/s 1l = 4.5mm = 47pix
+
+nWaves = 10e3; % number of waves
+v_freq = [500, 600, 700, 800, 900, 1000];
+v_freq = [500];
+nFields = 1;
+
+window = 15; %11 pixels as described in paper
+nFields = 1;
+
+w_kernel = [window, window];
+stride = 1;
+tic;
+
+pathdata = './dataold/';
+pathout = './out/old';
+
+if ~exist("pathout","dir"); mkdir(pathout); end
+
+for freq = v_freq
+   
+    pathfreq_in = [pathdata,'Data', num2str(freq),'Hz-',num2str(nWaves),'ondas/'];
+    pathfreq_out = [pathout, 'Out', num2str(freq),'Hz/'];
+
+    if ~exist(pathfreq_out,"dir"); mkdir(pathfreq_out); end
+
+    for field = 1:nFields
+        name = ['R-FIELD_inc_',num2str(field),'.mat'];
+        R_Field = load([pathfreq_in, name]);
+        dinf.dx = min(diff(R_Field.x));
+        dinf.dz = min(diff(R_Field.z));
+        frame = R_Field.pv_complexZ(:,:,1); % number of frame
+            
+        %frame = (frame'); %transpose for Z (vertical-axial) X(horizontal-lateral)
+        
+        og_size = size(frame);
+        mirror_frame = padarray(frame,[(window-1)/2 (window-1)/2],'symmetric');
+    
+        % FUNCION SWS MAP (Con linearizacion)
+        [grad_z,grad_x,k,sws_matrix] = phase_estimator_QR_bigmat(mirror_frame, w_kernel, freq, dinf, og_size, 0.33, stride);
+    
+        % EMPAQUETAR RESULTADOS
+        
+        pg_QRv2.grad_z = grad_z;
+        pg_QRv2.grad_x = grad_x;
+        pg_QRv2.grad_k = k;
+        pg_QRv2.sws_matrix = sws_matrix;
+       
+        
+    % Save
+    pathQR = [pathfreq_out, 'PhaseGradientQRv2/'];
+    if ~exist(pathQR,"dir"); mkdir(pathQR); end
+%     save([pathQR, 'SWS_PG_QRv2_homo_',num2str(field),'.mat'],'pg_QRv2');
+
+    end
+end
+toc
+fprintf('---------------------------\n')
+
+
 %% SIMPLE SWS PLOT
 cm = 1e2;
 mm = 1e3;
